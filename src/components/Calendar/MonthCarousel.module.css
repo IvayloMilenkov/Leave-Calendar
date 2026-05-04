@@ -1,0 +1,22 @@
+.viewport {
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  will-change: transform;
+}
+
+/* width is set via inline style (pixel-exact from ResizeObserver) */
+.slot {
+  flex-shrink: 0;
+}
+
+.slot + .slot {
+  border-left: 1.5px solid var(--color-border);
+}
+
+.side {
+  opacity: 0.4;
+  pointer-events: none;
+}

@@ -1,0 +1,86 @@
+.month {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.name {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  padding: 2px 0 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.12s;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.name:hover {
+  color: var(--color-accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.1s;
+  min-width: 0;
+}
+
+.cell:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.weekend {
+  color: var(--color-text-muted);
+  opacity: 0.35;
+  cursor: default;
+}
+
+.holiday {
+  background: var(--color-holiday-bg);
+  color: var(--color-holiday-text);
+  font-weight: 700;
+  cursor: default;
+}
+
+.today {
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.marked {
+  background: var(--color-leave-bg);
+  color: var(--color-leave-text);
+  font-weight: 700;
+}
+
+.marked:hover:not(:disabled) {
+  background: var(--color-leave-hover);
+}

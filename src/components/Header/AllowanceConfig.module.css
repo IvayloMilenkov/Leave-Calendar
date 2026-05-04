@@ -1,0 +1,31 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.input {
+  width: 62px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.12s;
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+}

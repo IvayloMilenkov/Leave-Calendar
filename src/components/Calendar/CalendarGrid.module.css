@@ -1,0 +1,24 @@
+.wrapper {
+  padding: 0 0.75rem 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  padding: 8px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pad {
+  aspect-ratio: 1;
+  min-height: 48px;
+}

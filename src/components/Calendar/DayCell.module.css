@@ -1,0 +1,56 @@
+.cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text);
+  transition: background 0.12s, color 0.12s;
+  font-family: inherit;
+}
+
+.cell:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.weekend {
+  color: var(--color-text-muted);
+  opacity: 0.35;
+  cursor: default;
+}
+
+.today .todayRing,
+.todayRing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.holiday {
+  background: var(--color-holiday-bg);
+  color: var(--color-holiday-text);
+  font-weight: 600;
+  cursor: default;
+}
+
+.marked {
+  background: var(--color-leave-bg);
+  color: var(--color-leave-text);
+  font-weight: 600;
+}
+
+.marked:hover:not(:disabled) {
+  background: var(--color-leave-hover);
+}
