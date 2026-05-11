@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { useTeam } from '../../context/TeamContext';
 import styles from './TeamSetup.module.css';
 
-export function TeamSetup() {
+interface Props {
+  initialCode?: string;
+}
+
+export function TeamSetup({ initialCode }: Props) {
   const { createTeam, joinTeam } = useTeam();
-  const [tab, setTab] = useState<'create' | 'join'>('create');
+  const [tab, setTab] = useState<'create' | 'join'>(initialCode ? 'join' : 'create');
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode ?? '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

@@ -53,15 +53,15 @@ function AppInner() {
   const { user, loading: authLoading } = useAuth();
   const { team, loading: teamLoading } = useTeam();
 
-  // Strip ?join= param from URL once logged in
+  const joinCode = new URLSearchParams(window.location.search).get('join') ?? undefined;
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('join')) window.history.replaceState({}, '', window.location.pathname);
-  }, []);
+    if (joinCode) window.history.replaceState({}, '', window.location.pathname);
+  }, [joinCode]);
 
   if (authLoading || teamLoading) return null;
   if (!user) return <LoginPage />;
-  if (!team) return <TeamSetup />;
+  if (!team) return <TeamSetup initialCode={joinCode} />;
   return <CalendarView />;
 }
 
