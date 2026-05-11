@@ -16,9 +16,14 @@ export function loadState(): AppState {
     if (!raw) return defaultState;
     const parsed = JSON.parse(raw) as Partial<AppState>;
     const savedUi = (parsed.ui ?? {}) as Partial<AppState['ui']>;
+    const rawDays = parsed.leaveDays ?? {};
+    const leaveDays: AppState['leaveDays'] = {};
+    for (const [k, v] of Object.entries(rawDays)) {
+      leaveDays[k] = (v === 'planned' || v === 'approved') ? v : 'approved';
+    }
     return {
       config: parsed.config ?? defaultState.config,
-      leaveDays: parsed.leaveDays ?? defaultState.leaveDays,
+      leaveDays,
       ui: {
         viewYear:  savedUi.viewYear  ?? defaultState.ui.viewYear,
         viewMonth: savedUi.viewMonth ?? defaultState.ui.viewMonth,

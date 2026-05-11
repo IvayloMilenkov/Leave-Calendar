@@ -45,12 +45,23 @@
   cursor: default;
 }
 
-.marked {
+.planned {
+  background: transparent;
+  color: var(--color-leave-text);
+  font-weight: 600;
+  border: 2px dashed var(--color-leave-bg);
+}
+
+.planned:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.approved {
   background: var(--color-leave-bg);
   color: var(--color-leave-text);
   font-weight: 600;
 }
 
-.marked:hover:not(:disabled) {
+.approved:hover:not(:disabled) {
   background: var(--color-leave-hover);
 }

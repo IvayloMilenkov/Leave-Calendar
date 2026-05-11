@@ -2,7 +2,7 @@ export interface AppState {
   config: {
     totalAllowanceDays: number;
   };
-  leaveDays: Record<string, true>;
+  leaveDays: Record<string, 'planned' | 'approved'>;
   ui: {
     viewYear: number;
     viewMonth: number;
@@ -21,10 +21,12 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'TOGGLE_LEAVE_DAY': {
       const next = { ...state.leaveDays };
-      if (next[action.payload]) {
+      if (next[action.payload] === 'planned') {
+        next[action.payload] = 'approved';
+      } else if (next[action.payload] === 'approved') {
         delete next[action.payload];
       } else {
-        next[action.payload] = true;
+        next[action.payload] = 'planned';
       }
       return { ...state, leaveDays: next };
     }
@@ -34,8 +36,13 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, ui: { ...state.ui, viewYear: action.payload.year, viewMonth: action.payload.month } };
     case 'SET_VIEW_MODE':
       return { ...state, ui: { ...state.ui, viewMode: action.payload } };
-    case 'CLEAR_ALL':
-      return { ...state, leaveDays: {} };
+    case 'CLEAR_ALL': {
+      const next: AppState['leaveDays'] = {};
+      for (const [k, v] of Object.entries(state.leaveDays)) {
+        if (v === 'approved') next[k] = 'approved';
+      }
+      return { ...state, leaveDays: next };
+    }
     default:
       return state;
   }

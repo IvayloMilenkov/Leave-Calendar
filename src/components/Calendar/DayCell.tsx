@@ -11,7 +11,9 @@ export function DayCell({ dateStr, holidayName }: Props) {
   const { state, dispatch } = useAppContext();
   const weekend = isWeekend(dateStr);
   const today = isToday(dateStr);
-  const marked = Boolean(state.leaveDays[dateStr]);
+  const dayState = state.leaveDays[dateStr];
+  const planned  = dayState === 'planned';
+  const approved = dayState === 'approved';
   const blocked = weekend || Boolean(holidayName);
   const day = parseInt(dateStr.split('-')[2], 10);
 
@@ -25,14 +27,15 @@ export function DayCell({ dateStr, holidayName }: Props) {
         styles.cell,
         weekend ? styles.weekend : '',
         holidayName && !weekend ? styles.holiday : '',
-        today && !marked && !holidayName ? styles.today : '',
-        marked ? styles.marked : '',
+        today && !planned && !approved && !holidayName ? styles.today : '',
+        planned  ? styles.planned  : '',
+        approved ? styles.approved : '',
       ].filter(Boolean).join(' ')}
       onClick={handleClick}
       disabled={blocked}
       title={holidayName}
-      aria-label={`${dateStr}${holidayName ? ` — ${holidayName}` : ''}${marked ? ' (leave)' : ''}`}
-      aria-pressed={marked}
+      aria-label={`${dateStr}${holidayName ? ` — ${holidayName}` : ''}${planned ? ' (planned)' : approved ? ' (approved)' : ''}`}
+      aria-pressed={planned || approved}
     >
       <span className={today && !holidayName ? styles.todayRing : ''}>{day}</span>
     </button>
