@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { useTeam } from '../../context/TeamContext';
 import { useAuth } from '../../context/AuthContext';
@@ -42,6 +42,17 @@ export function DayCell({ dateStr, holidayName, teamDots = [] }: Props) {
 
   const closeTooltip = useCallback(() => setAnchorRect(null), []);
 
+  useEffect(() => {
+    if (!anchorRect) return;
+    const close = () => setAnchorRect(null);
+    document.addEventListener('touchstart', close, { once: true });
+    document.addEventListener('click', close, { once: true });
+    return () => {
+      document.removeEventListener('touchstart', close);
+      document.removeEventListener('click', close);
+    };
+  }, [anchorRect]);
+
   function handleClick() {
     if (blocked) return;
     const next = dayState === 'planned' ? 'approved' : dayState === 'approved' ? null : 'planned';
@@ -79,7 +90,7 @@ export function DayCell({ dateStr, holidayName, teamDots = [] }: Props) {
         onMouseEnter={hasTooltip ? openTooltip : undefined}
         onMouseLeave={hasTooltip ? closeTooltip : undefined}
         onTouchStart={hasTooltip ? () => { longPressTimer.current = setTimeout(openTooltip, LONG_PRESS_MS); } : undefined}
-        onTouchEnd={hasTooltip ? () => { clearTimeout(longPressTimer.current); closeTooltip(); } : undefined}
+        onTouchEnd={hasTooltip ? () => { clearTimeout(longPressTimer.current); } : undefined}
         onTouchMove={() => clearTimeout(longPressTimer.current)}
       >
         <span className={today && !holidayName ? styles.todayRing : ''}>{day}</span>
