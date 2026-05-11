@@ -109,12 +109,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   async function joinTeam(inviteCode: string) {
     if (!user) return;
-    const { data: found, error } = await supabase
-      .from('teams')
-      .select('*')
-      .eq('invite_code', inviteCode.trim())
-      .maybeSingle();
+    const { data: rows, error } = await supabase
+      .rpc('find_team_by_invite_code', { code: inviteCode.trim() });
     if (error) throw error;
+    const found = rows?.[0] ?? null;
     if (!found) throw new Error('Team not found — check the invite code.');
 
     const { data: existingMembers } = await supabase
