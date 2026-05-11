@@ -52,5 +52,13 @@ export function getHolidays(year: number): Record<string, string> {
   result[fmt(easter)]              = 'Easter Sunday';
   result[fmt(addDays(easter,  1))] = 'Easter Monday';
 
+  // When a fixed holiday falls on Sunday, Monday is a substitute holiday
+  for (const h of FIXED) {
+    const date = new Date(year, h.month - 1, h.day);
+    if (date.getDay() === 0) {
+      result[fmt(addDays(date, 1))] = `${h.name} (substitute)`;
+    }
+  }
+
   return result;
 }
