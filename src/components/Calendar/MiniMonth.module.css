@@ -75,6 +75,12 @@
   border-radius: 50%;
 }
 
+.planned {
+  outline: 1.5px dashed var(--color-leave-text);
+  color: var(--color-leave-text);
+  font-weight: 700;
+}
+
 .marked {
   background: var(--color-leave-bg);
   color: var(--color-leave-text);

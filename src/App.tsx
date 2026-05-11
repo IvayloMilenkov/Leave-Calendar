@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { TeamProvider, useTeam } from './context/TeamContext';
 import { Header } from './components/Header/Header';
 import { LeaveCounter } from './components/LeaveCounter/LeaveCounter';
 import { CalendarNav } from './components/Calendar/CalendarNav';
 import { MonthCarousel } from './components/Calendar/MonthCarousel';
 import { YearView } from './components/Calendar/YearView';
+import { LoginPage } from './components/Auth/LoginPage';
+import { TeamSetup } from './components/Team/TeamSetup';
 import styles from './App.module.css';
 
-function AppInner() {
+function CalendarView() {
   const { state } = useAppContext();
   const yearMode = state.ui.viewMode === 'year';
 
@@ -15,9 +19,7 @@ function AppInner() {
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (yearMode !== displayYear && !leaving) {
-      setLeaving(true);
-    }
+    if (yearMode !== displayYear && !leaving) setLeaving(true);
   }, [yearMode, displayYear, leaving]);
 
   function handleAnimEnd(e: React.AnimationEvent<HTMLDivElement>) {
@@ -47,10 +49,30 @@ function AppInner() {
   );
 }
 
+function AppInner() {
+  const { user, loading: authLoading } = useAuth();
+  const { team, loading: teamLoading } = useTeam();
+
+  // Strip ?join= param from URL once logged in
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('join')) window.history.replaceState({}, '', window.location.pathname);
+  }, []);
+
+  if (authLoading || teamLoading) return null;
+  if (!user) return <LoginPage />;
+  if (!team) return <TeamSetup />;
+  return <CalendarView />;
+}
+
 export default function App() {
   return (
-    <AppProvider>
-      <AppInner />
-    </AppProvider>
+    <AuthProvider>
+      <TeamProvider>
+        <AppProvider>
+          <AppInner />
+        </AppProvider>
+      </TeamProvider>
+    </AuthProvider>
   );
 }

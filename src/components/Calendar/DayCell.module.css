@@ -65,3 +65,19 @@
 .approved:hover:not(:disabled) {
   background: var(--color-leave-hover);
 }
+
+.dots {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: block;
+}
