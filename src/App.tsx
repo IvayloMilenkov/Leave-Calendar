@@ -21,9 +21,20 @@ function useIsMobile() {
 }
 
 function CalendarView() {
-  const { state } = useAppContext();
+  const { state, dispatch } = useAppContext();
+  const { teamLeaveDays } = useTeam();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const yearMode = state.ui.viewMode === 'year';
+
+  // On first load, replace localStorage days with the authoritative Supabase data
+  useEffect(() => {
+    const myDays: Record<string, 'planned' | 'approved'> = {};
+    for (const d of teamLeaveDays) {
+      if (d.user_id === user?.id) myDays[d.date] = d.status;
+    }
+    dispatch({ type: 'SET_LEAVE_DAYS', payload: myDays });
+  }, []);
 
   const [displayYear, setDisplayYear] = useState(yearMode);
   const [leaving, setLeaving] = useState(false);

@@ -15,6 +15,7 @@ export type Action =
   | { type: 'SET_ALLOWANCE'; payload: number }
   | { type: 'SET_VIEW'; payload: { year: number; month: number } }
   | { type: 'SET_VIEW_MODE'; payload: 'month' | 'year' }
+  | { type: 'SET_LEAVE_DAYS'; payload: AppState['leaveDays'] }
   | { type: 'CLEAR_ALL' };
 
 export function reducer(state: AppState, action: Action): AppState {
@@ -36,6 +37,8 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, ui: { ...state.ui, viewYear: action.payload.year, viewMonth: action.payload.month } };
     case 'SET_VIEW_MODE':
       return { ...state, ui: { ...state.ui, viewMode: action.payload } };
+    case 'SET_LEAVE_DAYS':
+      return { ...state, leaveDays: action.payload };
     case 'CLEAR_ALL': {
       const next: AppState['leaveDays'] = {};
       for (const [k, v] of Object.entries(state.leaveDays)) {
