@@ -53,11 +53,13 @@ function AppInner() {
   const { user, loading: authLoading } = useAuth();
   const { team, loading: teamLoading } = useTeam();
 
-  const joinCode = new URLSearchParams(window.location.search).get('join') ?? undefined;
+  const [joinCode] = useState<string | undefined>(
+    () => new URLSearchParams(window.location.search).get('join') ?? undefined
+  );
 
   useEffect(() => {
     if (joinCode) window.history.replaceState({}, '', window.location.pathname);
-  }, [joinCode]);
+  }, []);
 
   if (authLoading || teamLoading) return null;
   if (!user) return <LoginPage />;
