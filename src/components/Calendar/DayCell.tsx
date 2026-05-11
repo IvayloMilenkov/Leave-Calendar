@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { useAppContext } from '../../context/AppContext';
 import { useTeam } from '../../context/TeamContext';
 import { useAuth } from '../../context/AuthContext';
@@ -72,7 +73,7 @@ export function DayCell({ dateStr, holidayName, teamDots = [] }: Props) {
 
   return (
     <>
-      <button
+      <motion.button
         ref={btnRef}
         className={[
           styles.cell,
@@ -92,6 +93,8 @@ export function DayCell({ dateStr, holidayName, teamDots = [] }: Props) {
         onTouchStart={hasTooltip ? () => { longPressTimer.current = setTimeout(openTooltip, LONG_PRESS_MS); } : undefined}
         onTouchEnd={hasTooltip ? () => { clearTimeout(longPressTimer.current); } : undefined}
         onTouchMove={() => clearTimeout(longPressTimer.current)}
+        whileTap={blocked ? undefined : { scale: 0.82 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
       >
         <span className={today && !holidayName ? styles.todayRing : ''}>{day}</span>
         {teamDots.length > 0 && (
@@ -101,7 +104,7 @@ export function DayCell({ dateStr, holidayName, teamDots = [] }: Props) {
             ))}
           </span>
         )}
-      </button>
+      </motion.button>
       {anchorRect && <DayTooltip entries={tooltipEntries} anchorRect={anchorRect} />}
     </>
   );

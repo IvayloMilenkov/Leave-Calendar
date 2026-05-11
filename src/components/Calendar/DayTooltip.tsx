@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import styles from './DayTooltip.module.css';
 
 export interface TooltipEntry {
@@ -26,10 +27,13 @@ export function DayTooltip({ entries, anchorRect }: Props) {
   };
 
   return createPortal(
-    <div
+    <motion.div
       className={`${styles.tooltip} ${above ? styles.above : styles.below}`}
       style={style}
       role="tooltip"
+      initial={{ opacity: 0, scale: 0.88, y: above ? 4 : -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 22 }}
     >
       {entries.map((e, i) => (
         <div key={i} className={styles.entry}>
@@ -38,7 +42,7 @@ export function DayTooltip({ entries, anchorRect }: Props) {
           <span className={`${styles.status} ${styles[e.status]}`}>{e.status}</span>
         </div>
       ))}
-    </div>,
+    </motion.div>,
     document.body
   );
 }

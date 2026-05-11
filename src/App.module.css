@@ -25,31 +25,3 @@
   }
 }
 
-.viewWrapper { /* base, needed for key remount detection */ }
-
-/* entering month = zoom in (drilling into a specific month) */
-.viewEnterMonth { animation: viewInMonth 0.22s ease; }
-/* entering year  = zoom out (pulling back to see the whole year) */
-.viewEnterYear  { animation: viewInYear  0.22s ease; }
-
-/* exiting toward year = scale up as you pull back */
-.viewLeaveToYear  { animation: viewOutToYear  0.22s ease forwards; }
-/* exiting toward month = scale down as you drill in */
-.viewLeaveToMonth { animation: viewOutToMonth 0.22s ease forwards; }
-
-@keyframes viewInMonth {
-  from { opacity: 0; transform: scale(0.97); }
-  to   { opacity: 1; transform: scale(1);    }
-}
-@keyframes viewInYear {
-  from { opacity: 0; transform: scale(1.03); }
-  to   { opacity: 1; transform: scale(1);    }
-}
-@keyframes viewOutToYear {
-  from { opacity: 1; transform: scale(1);    }
-  to   { opacity: 0; transform: scale(1.03); }
-}
-@keyframes viewOutToMonth {
-  from { opacity: 1; transform: scale(1);    }
-  to   { opacity: 0; transform: scale(0.97); }
-}

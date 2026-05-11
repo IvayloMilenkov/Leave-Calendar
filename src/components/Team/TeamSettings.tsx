@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { useTeam } from '../../context/TeamContext';
 import styles from './TeamSettings.module.css';
@@ -41,8 +42,19 @@ export function TeamSettings({ onClose }: Props) {
   }
 
   return (
-    <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={styles.panel}>
+    <motion.div
+      className={styles.overlay}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18 }}
+    >
+      <motion.div
+        className={styles.panel}
+        initial={{ x: 40, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+      >
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>{team.name}</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
@@ -97,7 +109,7 @@ export function TeamSettings({ onClose }: Props) {
           <button className={styles.dangerBtn} onClick={handleLeave}>Leave team</button>
           <button className={styles.smallBtn} onClick={signOut}>Sign out</button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

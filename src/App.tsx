@@ -1,4 +1,5 @@
 import { useState, useEffect, useSyncExternalStore } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TeamProvider, useTeam } from './context/TeamContext';
@@ -36,36 +37,22 @@ function CalendarView() {
     dispatch({ type: 'SET_LEAVE_DAYS', payload: myDays });
   }, []);
 
-  const [displayYear, setDisplayYear] = useState(yearMode);
-  const [leaving, setLeaving] = useState(false);
-
-  useEffect(() => {
-    if (yearMode !== displayYear && !leaving) setLeaving(true);
-  }, [yearMode, displayYear, leaving]);
-
-  function handleAnimEnd(e: React.AnimationEvent<HTMLDivElement>) {
-    if (e.target !== e.currentTarget || !leaving) return;
-    setDisplayYear(yearMode);
-    setLeaving(false);
-  }
-
   return (
-    <div className={`${styles.card} ${displayYear ? styles.cardWide : styles.cardCarousel}`}>
+    <div className={`${styles.card} ${yearMode ? styles.cardWide : styles.cardCarousel}`}>
       <Header />
       <LeaveCounter />
       <CalendarNav />
-      <div
-        key={String(displayYear)}
-        className={[
-          styles.viewWrapper,
-          leaving
-            ? (yearMode ? styles.viewLeaveToYear : styles.viewLeaveToMonth)
-            : (displayYear ? styles.viewEnterYear : styles.viewEnterMonth),
-        ].join(' ')}
-        onAnimationEnd={handleAnimEnd}
-      >
-        {displayYear ? <YearView /> : isMobile ? <CalendarGrid /> : <MonthCarousel />}
-      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={yearMode ? 'year' : 'month'}
+          initial={{ opacity: 0, scale: yearMode ? 1.04 : 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: yearMode ? 0.96 : 1.04 }}
+          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+        >
+          {yearMode ? <YearView /> : isMobile ? <CalendarGrid /> : <MonthCarousel />}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
