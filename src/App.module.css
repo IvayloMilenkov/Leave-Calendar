@@ -16,6 +16,15 @@
   max-width: min(99vw, 1400px);
 }
 
+@media (max-width: 599px) {
+  .card, .cardWide, .cardCarousel {
+    max-width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+  }
+}
+
 .viewWrapper { /* base, needed for key remount detection */ }
 
 /* entering month = zoom in (drilling into a specific month) */

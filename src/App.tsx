@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TeamProvider, useTeam } from './context/TeamContext';
+import { CalendarGrid } from './components/Calendar/CalendarGrid';
 import { Header } from './components/Header/Header';
 import { LeaveCounter } from './components/LeaveCounter/LeaveCounter';
 import { CalendarNav } from './components/Calendar/CalendarNav';
@@ -11,8 +12,17 @@ import { LoginPage } from './components/Auth/LoginPage';
 import { TeamSetup } from './components/Team/TeamSetup';
 import styles from './App.module.css';
 
+const mobileQuery = window.matchMedia('(max-width: 599px)');
+function useIsMobile() {
+  return useSyncExternalStore(
+    cb => { mobileQuery.addEventListener('change', cb); return () => mobileQuery.removeEventListener('change', cb); },
+    () => mobileQuery.matches,
+  );
+}
+
 function CalendarView() {
   const { state } = useAppContext();
+  const isMobile = useIsMobile();
   const yearMode = state.ui.viewMode === 'year';
 
   const [displayYear, setDisplayYear] = useState(yearMode);
@@ -43,7 +53,7 @@ function CalendarView() {
         ].join(' ')}
         onAnimationEnd={handleAnimEnd}
       >
-        {displayYear ? <YearView /> : <MonthCarousel />}
+        {displayYear ? <YearView /> : isMobile ? <CalendarGrid /> : <MonthCarousel />}
       </div>
     </div>
   );

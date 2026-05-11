@@ -60,6 +60,10 @@ body {
   padding: 2rem 1rem;
 }
 
+@media (max-width: 599px) {
+  body { padding: 0; }
+}
+
 button { font-family: inherit; }
 
 input[type='number']::-webkit-inner-spin-button,
