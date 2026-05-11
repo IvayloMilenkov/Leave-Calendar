@@ -79,7 +79,7 @@ export function TeamSettings({ onClose }: Props) {
           <ul className={styles.memberList}>
             {members.map(m => {
               const isMe = m.user_id === user?.id;
-              const label = isMe ? 'You' : m.user_id.slice(0, 8);
+              const label = isMe ? 'You' : (m.display_name ?? m.user_id.slice(0, 8));
               return (
                 <li key={m.user_id} className={styles.memberItem}>
                   <span className={styles.dot} style={{ background: m.color }} />

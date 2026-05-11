@@ -103,7 +103,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     if (error || !newTeam) throw error;
 
     const color = MEMBER_COLORS[0];
-    await supabase.from('team_members').insert({ team_id: newTeam.id, user_id: user.id, color });
+    const display_name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null;
+    await supabase.from('team_members').insert({ team_id: newTeam.id, user_id: user.id, color, display_name });
     await loadTeam();
   }
 
@@ -123,7 +124,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     const usedColors = new Set((existingMembers ?? []).map(m => m.color));
     const color = MEMBER_COLORS.find(c => !usedColors.has(c)) ?? MEMBER_COLORS[0];
 
-    await supabase.from('team_members').insert({ team_id: found.id, user_id: user.id, color });
+    const display_name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null;
+    await supabase.from('team_members').insert({ team_id: found.id, user_id: user.id, color, display_name });
     await loadTeam();
   }
 

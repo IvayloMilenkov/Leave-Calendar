@@ -18,7 +18,7 @@ export interface TeamMemberRow {
   team_id: string;
   user_id: string;
   color: string;
-  profile?: { display_name: string; email: string };
+  display_name: string | null;
 }
 
 export interface LeaveDayRow {
