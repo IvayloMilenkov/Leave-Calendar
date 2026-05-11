@@ -27,13 +27,13 @@ export function CalendarGrid({ year: yearProp, month: monthProp }: Props = {}) {
   const teamDotsByDate = useMemo(() => {
     if (!team) return {};
     const memberMap = new Map(members.map(m => [m.user_id, m]));
-    const map: Record<string, { color: string; label: string }[]> = {};
+    const map: Record<string, { color: string; label: string; status: 'planned' | 'approved' }[]> = {};
     for (const d of teamLeaveDays) {
       if (d.user_id === user?.id) continue; // own days shown as planned/approved
       const member = memberMap.get(d.user_id);
       if (!member) continue;
       if (!map[d.date]) map[d.date] = [];
-      map[d.date].push({ color: member.color, label: member.display_name ?? d.user_id.slice(0, 6) });
+      map[d.date].push({ color: member.color, label: member.display_name ?? d.user_id.slice(0, 6), status: d.status });
     }
     return map;
   }, [teamLeaveDays, members, team, user]);
