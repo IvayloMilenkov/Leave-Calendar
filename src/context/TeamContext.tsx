@@ -9,12 +9,16 @@ const MEMBER_COLORS = [
   '#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6',
 ];
 
+const ACTIVE_TEAM_KEY = 'leave-calendar-active-team';
+
 interface TeamContextValue {
   team: TeamRow | null;
+  allTeams: TeamRow[];
   members: TeamMemberRow[];
   myColor: string;
   teamLeaveDays: LeaveDayRow[];
   loading: boolean;
+  activeTeamId: string | null;
   createTeam: (name: string) => Promise<void>;
   joinTeam: (inviteCode: string) => Promise<void>;
   leaveTeam: () => Promise<void>;
@@ -22,76 +26,123 @@ interface TeamContextValue {
   updateMyColor: (color: string) => Promise<void>;
   regenerateInviteCode: () => Promise<void>;
   syncLeaveDay: (date: string, status: LeaveStatus | null) => Promise<void>;
+  selectTeam: (id: string) => Promise<void>;
+  clearActiveTeam: () => void;
 }
 
 const TeamContext = createContext<TeamContextValue | null>(null);
 
 export function TeamProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const [allTeams, setAllTeams] = useState<TeamRow[]>([]);
   const [team, setTeam] = useState<TeamRow | null>(null);
   const [members, setMembers] = useState<TeamMemberRow[]>([]);
   const [teamLeaveDays, setTeamLeaveDays] = useState<LeaveDayRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTeamId, setActiveTeamIdRaw] = useState<string | null>(
+    () => localStorage.getItem(ACTIVE_TEAM_KEY),
+  );
 
   const myColor = members.find(m => m.user_id === user?.id)?.color ?? MEMBER_COLORS[0];
 
-  const loadTeam = useCallback(async () => {
-    if (!user) { setLoading(false); return; }
-    setLoading(true);
-
-    const { data: membership } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (!membership) { setTeam(null); setMembers([]); setLoading(false); return; }
-
-    const { data: teamData } = await supabase
-      .from('teams')
-      .select('*')
-      .eq('id', membership.team_id)
-      .single();
-
-    const { data: membersData } = await supabase
-      .from('team_members')
-      .select('*')
-      .eq('team_id', membership.team_id);
-
-    const { data: leaveData } = await supabase
-      .from('leave_days')
-      .select('*')
-      .eq('team_id', membership.team_id);
-
+  const loadTeamData = useCallback(async (teamId: string) => {
+    const [{ data: teamData }, { data: membersData }, { data: leaveData }] = await Promise.all([
+      supabase.from('teams').select('*').eq('id', teamId).single(),
+      supabase.from('team_members').select('*').eq('team_id', teamId),
+      supabase.from('leave_days').select('*').eq('team_id', teamId),
+    ]);
     setTeam(teamData ?? null);
     setMembers(membersData ?? []);
     setTeamLeaveDays(leaveData ?? []);
+  }, []);
+
+  const loadAll = useCallback(async () => {
+    if (!user) { setLoading(false); return; }
+    setLoading(true);
+
+    const { data: memberships } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', user.id);
+
+    if (!memberships?.length) {
+      setAllTeams([]);
+      setTeam(null);
+      setMembers([]);
+      setTeamLeaveDays([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data: teamsData } = await supabase
+      .from('teams')
+      .select('*')
+      .in('id', memberships.map(m => m.team_id));
+
+    const teams = teamsData ?? [];
+    setAllTeams(teams);
+
+    const storedId = localStorage.getItem(ACTIVE_TEAM_KEY);
+    const validStored = storedId ? teams.find(t => t.id === storedId) : null;
+
+    let targetId: string | null = null;
+    if (validStored) {
+      targetId = validStored.id;
+    } else if (teams.length === 1) {
+      targetId = teams[0].id as string;
+      localStorage.setItem(ACTIVE_TEAM_KEY, targetId);
+      setActiveTeamIdRaw(targetId);
+    }
+    // else: multiple teams, no stored selection → show picker
+
+    if (targetId) {
+      await loadTeamData(targetId);
+    } else {
+      setTeam(null);
+      setMembers([]);
+      setTeamLeaveDays([]);
+    }
+
     setLoading(false);
-  }, [user]);
+  }, [user, loadTeamData]);
 
-  useEffect(() => { loadTeam(); }, [loadTeam]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
-  // Real-time subscriptions
+  // Realtime subscriptions for the active team
   useEffect(() => {
     if (!team) return;
 
     const leaveSub = supabase
       .channel(`leave:${team.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_days', filter: `team_id=eq.${team.id}` },
-        () => { loadTeam(); })
+        () => { loadTeamData(team.id); })
       .subscribe();
 
     const memberSub = supabase
       .channel(`members:${team.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members', filter: `team_id=eq.${team.id}` },
-        () => { loadTeam(); })
+        () => { loadTeamData(team.id); })
       .subscribe();
 
     return () => {
       supabase.removeChannel(leaveSub);
       supabase.removeChannel(memberSub);
     };
-  }, [team, loadTeam]);
+  }, [team, loadTeamData]);
+
+  async function selectTeam(id: string) {
+    localStorage.setItem(ACTIVE_TEAM_KEY, id);
+    setActiveTeamIdRaw(id);
+    await loadTeamData(id);
+  }
+
+  function clearActiveTeam() {
+    localStorage.removeItem(ACTIVE_TEAM_KEY);
+    setActiveTeamIdRaw(null);
+    setTeam(null);
+    setMembers([]);
+    setTeamLeaveDays([]);
+  }
 
   async function createTeam(name: string) {
     if (!user) return;
@@ -105,7 +156,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     const color = MEMBER_COLORS[0];
     const display_name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null;
     await supabase.from('team_members').insert({ team_id: newTeam.id, user_id: user.id, color, display_name });
-    await loadTeam();
+    setAllTeams(prev => [...prev, newTeam]);
+    await selectTeam(newTeam.id);
   }
 
   async function joinTeam(inviteCode: string) {
@@ -115,6 +167,9 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
     const found = rows?.[0] ?? null;
     if (!found) throw new Error('Team not found — check the invite code.');
+
+    const alreadyMember = allTeams.find(t => t.id === found.id);
+    if (alreadyMember) { await selectTeam(found.id); return; }
 
     const { data: existingMembers } = await supabase
       .from('team_members')
@@ -126,19 +181,27 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
     const display_name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null;
     await supabase.from('team_members').insert({ team_id: found.id, user_id: user.id, color, display_name });
-    await loadTeam();
+    setAllTeams(prev => [...prev, found]);
+    await selectTeam(found.id);
   }
 
   async function leaveTeam() {
     if (!user || !team) return;
     await supabase.from('team_members').delete().eq('team_id', team.id).eq('user_id', user.id);
-    setTeam(null); setMembers([]); setTeamLeaveDays([]);
+    const remaining = allTeams.filter(t => t.id !== team.id);
+    setAllTeams(remaining);
+    if (remaining.length === 1) {
+      await selectTeam(remaining[0].id);
+    } else {
+      clearActiveTeam();
+    }
   }
 
   async function removeMember(userId: string) {
     if (!team) return;
     await supabase.from('team_members').delete().eq('team_id', team.id).eq('user_id', userId);
-    await loadTeam();
+    setMembers(prev => prev.filter(m => m.user_id !== userId));
+    setTeamLeaveDays(prev => prev.filter(d => d.user_id !== userId));
   }
 
   async function updateMyColor(color: string) {
@@ -151,7 +214,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     if (!team) return;
     const newCode = Math.random().toString(36).slice(2, 10);
     const { data } = await supabase.from('teams').update({ invite_code: newCode }).eq('id', team.id).select().single();
-    if (data) setTeam(data);
+    if (data) {
+      setTeam(data);
+      setAllTeams(prev => prev.map(t => t.id === team.id ? data : t));
+    }
   }
 
   async function syncLeaveDay(date: string, status: LeaveStatus | null) {
@@ -174,9 +240,9 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   return (
     <TeamContext.Provider value={{
-      team, members, myColor, teamLeaveDays, loading,
+      team, allTeams, members, myColor, teamLeaveDays, loading, activeTeamId,
       createTeam, joinTeam, leaveTeam, removeMember,
-      updateMyColor, regenerateInviteCode, syncLeaveDay,
+      updateMyColor, regenerateInviteCode, syncLeaveDay, selectTeam, clearActiveTeam,
     }}>
       {children}
     </TeamContext.Provider>

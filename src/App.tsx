@@ -11,6 +11,7 @@ import { MonthCarousel } from './components/Calendar/MonthCarousel';
 import { YearView } from './components/Calendar/YearView';
 import { LoginPage } from './components/Auth/LoginPage';
 import { TeamSetup } from './components/Team/TeamSetup';
+import { TeamPicker } from './components/Team/TeamPicker';
 import styles from './App.module.css';
 
 const mobileQuery = window.matchMedia('(max-width: 599px)');
@@ -59,7 +60,7 @@ function CalendarView() {
 
 function AppInner() {
   const { user, loading: authLoading } = useAuth();
-  const { team, loading: teamLoading } = useTeam();
+  const { team, allTeams, loading: teamLoading } = useTeam();
 
   const [joinCode] = useState<string | undefined>(
     () => new URLSearchParams(window.location.search).get('join') ?? undefined
@@ -71,7 +72,8 @@ function AppInner() {
 
   if (authLoading || teamLoading) return null;
   if (!user) return <LoginPage />;
-  if (!team) return <TeamSetup initialCode={joinCode} />;
+  if (allTeams.length === 0) return <TeamSetup initialCode={joinCode} />;
+  if (!team) return <TeamPicker initialCode={joinCode} />;
   return <CalendarView />;
 }
 

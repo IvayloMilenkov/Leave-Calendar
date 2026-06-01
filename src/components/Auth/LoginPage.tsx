@@ -1,17 +1,104 @@
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import styles from './LoginPage.module.css';
 
+type Mode = 'signin' | 'signup';
+
 export function LoginPage() {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const [mode, setMode] = useState<Mode>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      if (mode === 'signup') {
+        await signUpWithEmail(email, password);
+        setEmailSent(true);
+      } else {
+        await signInWithEmail(email, password);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (emailSent) {
+    return (
+      <div className={styles.wrapper}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Check your email</h1>
+          <p className={styles.subtitle}>
+            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then come back here to sign in.
+          </p>
+          <button className={styles.linkBtn} onClick={() => { setEmailSent(false); setMode('signin'); }}>
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.card}>
         <h1 className={styles.title}>Leave Calendar</h1>
-        <p className={styles.subtitle}>Sign in to track and share your leave days with your team.</p>
+        <p className={styles.subtitle}>Track and share leave days with your team.</p>
+
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${mode === 'signin' ? styles.tabActive : ''}`}
+            onClick={() => { setMode('signin'); setError(''); }}
+          >
+            Sign in
+          </button>
+          <button
+            className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`}
+            onClick={() => { setMode('signup'); setError(''); }}
+          >
+            Create account
+          </button>
+        </div>
+
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <input
+            className={styles.input}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <input
+            className={styles.input}
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            minLength={mode === 'signup' ? 6 : undefined}
+          />
+          {error && <p className={styles.error}>{error}</p>}
+          <button className={styles.submitBtn} type="submit" disabled={loading}>
+            {loading ? '…' : mode === 'signup' ? 'Create account' : 'Sign in'}
+          </button>
+        </form>
+
+        <div className={styles.divider}><span>or</span></div>
+
         <button className={styles.googleBtn} onClick={signInWithGoogle}>
           <GoogleIcon />
-          Sign in with Google
+          Continue with Google
         </button>
       </div>
     </div>
