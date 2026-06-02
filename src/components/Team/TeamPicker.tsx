@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useTeam } from '../../context/TeamContext';
 import { TeamSetup } from './TeamSetup';
 import styles from './TeamPicker.module.css';
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function TeamPicker({ initialCode }: Props) {
+  const { signOut } = useAuth();
   const { allTeams, selectTeam } = useTeam();
   const [showSetup, setShowSetup] = useState(!!initialCode);
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export function TeamPicker({ initialCode }: Props) {
         <button className={styles.joinBtn} onClick={() => setShowSetup(true)}>
           + Join or create another team
         </button>
+        <button className={styles.signOutBtn} onClick={signOut}>Sign out</button>
       </div>
     </div>
   );

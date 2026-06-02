@@ -81,3 +81,15 @@
 }
 
 .joinBtn:hover { text-decoration: underline; }
+
+.signOutBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  align-self: center;
+}
+
+.signOutBtn:hover { color: var(--color-text); }

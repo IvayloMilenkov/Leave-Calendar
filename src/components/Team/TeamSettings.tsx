@@ -16,7 +16,7 @@ interface Props {
 
 export function TeamSettings({ onClose }: Props) {
   const { user, signOut } = useAuth();
-  const { team, allTeams, members, myColor, leaveTeam, removeMember, updateMyColor, regenerateInviteCode, clearActiveTeam } = useTeam();
+  const { team, members, myColor, leaveTeam, removeMember, updateMyColor, regenerateInviteCode, clearActiveTeam } = useTeam();
   const [copied, setCopied] = useState(false);
 
   if (!team) return null;
@@ -107,9 +107,7 @@ export function TeamSettings({ onClose }: Props) {
 
         <div className={styles.footer}>
           <button className={styles.dangerBtn} onClick={handleLeave}>Leave team</button>
-          {allTeams.length > 1 && (
-            <button className={styles.smallBtn} onClick={() => { clearActiveTeam(); onClose(); }}>Switch team</button>
-          )}
+          <button className={styles.smallBtn} onClick={() => { clearActiveTeam(); onClose(); }}>Switch team</button>
           <button className={styles.smallBtn} onClick={signOut}>Sign out</button>
         </div>
       </motion.div>
