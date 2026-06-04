@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAppContext } from '../../context/AppContext';
 import { useTeam } from '../../context/TeamContext';
-import { useAuth } from '../../context/AuthContext';
+import { nextLeaveStatus } from '../../context/reducer';
 import { isWeekend, isToday } from './calendarUtils';
 import { DayTooltip, type TooltipEntry } from './DayTooltip';
 import styles from './DayCell.module.css';
@@ -23,8 +23,7 @@ const LONG_PRESS_MS = 500;
 
 export function DayCell({ dateStr, holidayName, teamDots = [] }: Props) {
   const { state, dispatch } = useAppContext();
-  const { team, syncLeaveDay, members } = useTeam();
-  const { user } = useAuth();
+  const { team, syncLeaveDay, myColor } = useTeam();
   const weekend = isWeekend(dateStr);
   const today = isToday(dateStr);
   const dayState = state.leaveDays[dateStr];
@@ -56,13 +55,15 @@ export function DayCell({ dateStr, holidayName, teamDots = [] }: Props) {
 
   function handleClick() {
     if (blocked) return;
-    const next = dayState === 'planned' ? 'approved' : dayState === 'approved' ? null : 'planned';
+    const prev = dayState;
+    const next = nextLeaveStatus(dayState);
     dispatch({ type: 'TOGGLE_LEAVE_DAY', payload: dateStr });
-    if (team) syncLeaveDay(dateStr, next);
+    if (team) {
+      syncLeaveDay(dateStr, next).catch(() => {
+        dispatch({ type: 'SET_LEAVE_DAY', payload: { date: dateStr, status: prev ?? null } });
+      });
+    }
   }
-
-  // Build tooltip entries — own booking + teammates
-  const myColor = members.find(m => m.user_id === user?.id)?.color ?? '#6366f1';
 
   const tooltipEntries: TooltipEntry[] = [
     ...(dayState ? [{ color: myColor, name: 'You', status: dayState }] : []),

@@ -1,6 +1,7 @@
 import {
   createContext, useContext, useEffect, useState, useCallback, type ReactNode,
 } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase, type TeamRow, type TeamMemberRow, type LeaveDayRow, type LeaveStatus } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -32,6 +33,10 @@ interface TeamContextValue {
 
 const TeamContext = createContext<TeamContextValue | null>(null);
 
+function displayNameFor(user: User): string | null {
+  return user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null;
+}
+
 export function TeamProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [allTeams, setAllTeams] = useState<TeamRow[]>([]);
@@ -46,11 +51,18 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const myColor = members.find(m => m.user_id === user?.id)?.color ?? MEMBER_COLORS[0];
 
   const loadTeamData = useCallback(async (teamId: string) => {
-    const [{ data: teamData }, { data: membersData }, { data: leaveData }] = await Promise.all([
+    const [
+      { data: teamData, error: teamError },
+      { data: membersData, error: membersError },
+      { data: leaveData, error: leaveError },
+    ] = await Promise.all([
       supabase.from('teams').select('*').eq('id', teamId).single(),
       supabase.from('team_members').select('*').eq('team_id', teamId),
       supabase.from('leave_days').select('*').eq('team_id', teamId),
     ]);
+    if (teamError) throw teamError;
+    if (membersError) throw membersError;
+    if (leaveError) throw leaveError;
     setTeam(teamData ?? null);
     setMembers(membersData ?? []);
     setTeamLeaveDays(leaveData ?? []);
@@ -60,50 +72,52 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     if (!user) { setLoading(false); return; }
     setLoading(true);
 
-    const { data: memberships } = await supabase
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', user.id);
+    try {
+      const { data: memberships } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', user.id);
 
-    if (!memberships?.length) {
-      setAllTeams([]);
-      setTeam(null);
-      setMembers([]);
-      setTeamLeaveDays([]);
+      if (!memberships?.length) {
+        setAllTeams([]);
+        setTeam(null);
+        setMembers([]);
+        setTeamLeaveDays([]);
+        return;
+      }
+
+      const { data: teamsData } = await supabase
+        .from('teams')
+        .select('*')
+        .in('id', memberships.map(m => m.team_id));
+
+      const teams = teamsData ?? [];
+      setAllTeams(teams);
+
+      const storedId = localStorage.getItem(ACTIVE_TEAM_KEY);
+      const validStored = storedId ? teams.find(t => t.id === storedId) : null;
+
+      let targetId: string | null = null;
+      if (validStored) {
+        targetId = validStored.id;
+      } else if (teams.length === 1) {
+        targetId = teams[0].id as string;
+        localStorage.setItem(ACTIVE_TEAM_KEY, targetId);
+        setActiveTeamIdRaw(targetId);
+      }
+
+      if (targetId) {
+        await loadTeamData(targetId);
+      } else {
+        setTeam(null);
+        setMembers([]);
+        setTeamLeaveDays([]);
+      }
+    } catch (err) {
+      console.error('Failed to load team data:', err);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data: teamsData } = await supabase
-      .from('teams')
-      .select('*')
-      .in('id', memberships.map(m => m.team_id));
-
-    const teams = teamsData ?? [];
-    setAllTeams(teams);
-
-    const storedId = localStorage.getItem(ACTIVE_TEAM_KEY);
-    const validStored = storedId ? teams.find(t => t.id === storedId) : null;
-
-    let targetId: string | null = null;
-    if (validStored) {
-      targetId = validStored.id;
-    } else if (teams.length === 1) {
-      targetId = teams[0].id as string;
-      localStorage.setItem(ACTIVE_TEAM_KEY, targetId);
-      setActiveTeamIdRaw(targetId);
-    }
-    // else: multiple teams, no stored selection → show picker
-
-    if (targetId) {
-      await loadTeamData(targetId);
-    } else {
-      setTeam(null);
-      setMembers([]);
-      setTeamLeaveDays([]);
-    }
-
-    setLoading(false);
   }, [user, loadTeamData]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -115,13 +129,13 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     const leaveSub = supabase
       .channel(`leave:${team.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_days', filter: `team_id=eq.${team.id}` },
-        () => { loadTeamData(team.id); })
+        () => { loadTeamData(team.id).catch(console.error); })
       .subscribe();
 
     const memberSub = supabase
       .channel(`members:${team.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members', filter: `team_id=eq.${team.id}` },
-        () => { loadTeamData(team.id); })
+        () => { loadTeamData(team.id).catch(console.error); })
       .subscribe();
 
     return () => {
@@ -153,9 +167,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       .single();
     if (error || !newTeam) throw error;
 
-    const color = MEMBER_COLORS[0];
-    const display_name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null;
-    await supabase.from('team_members').insert({ team_id: newTeam.id, user_id: user.id, color, display_name });
+    const display_name = displayNameFor(user);
+    await supabase.from('team_members').insert({
+      team_id: newTeam.id, user_id: user.id, color: MEMBER_COLORS[0], display_name,
+    });
     setAllTeams(prev => [...prev, newTeam]);
     await selectTeam(newTeam.id);
   }
@@ -179,7 +194,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     const usedColors = new Set((existingMembers ?? []).map(m => m.color));
     const color = MEMBER_COLORS.find(c => !usedColors.has(c)) ?? MEMBER_COLORS[0];
 
-    const display_name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? null;
+    const display_name = displayNameFor(user);
     await supabase.from('team_members').insert({ team_id: found.id, user_id: user.id, color, display_name });
     setAllTeams(prev => [...prev, found]);
     await selectTeam(found.id);
@@ -187,7 +202,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   async function leaveTeam() {
     if (!user || !team) return;
-    await supabase.from('team_members').delete().eq('team_id', team.id).eq('user_id', user.id);
+    const { error } = await supabase
+      .from('team_members').delete().eq('team_id', team.id).eq('user_id', user.id);
+    if (error) throw error;
+    await supabase.from('leave_days').delete().eq('team_id', team.id).eq('user_id', user.id);
     const remaining = allTeams.filter(t => t.id !== team.id);
     setAllTeams(remaining);
     if (remaining.length === 1) {
@@ -211,7 +229,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   }
 
   async function regenerateInviteCode() {
-    if (!team) return;
+    if (!team || !user) return;
+    if (user.id !== team.owner_id) throw new Error('Only the team owner can regenerate the invite code.');
     const newCode = Math.random().toString(36).slice(2, 10);
     const { data } = await supabase.from('teams').update({ invite_code: newCode }).eq('id', team.id).select().single();
     if (data) {
@@ -223,12 +242,15 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   async function syncLeaveDay(date: string, status: LeaveStatus | null) {
     if (!user || !team) return;
     if (status === null) {
-      await supabase.from('leave_days').delete().eq('user_id', user.id).eq('team_id', team.id).eq('date', date);
+      const { error } = await supabase
+        .from('leave_days').delete().eq('user_id', user.id).eq('team_id', team.id).eq('date', date);
+      if (error) throw error;
       setTeamLeaveDays(prev => prev.filter(d => !(d.user_id === user.id && d.date === date)));
     } else {
-      const { data } = await supabase.from('leave_days')
+      const { data, error } = await supabase.from('leave_days')
         .upsert({ user_id: user.id, team_id: team.id, date, status }, { onConflict: 'user_id,team_id,date' })
         .select().single();
+      if (error) throw error;
       if (data) {
         setTeamLeaveDays(prev => {
           const filtered = prev.filter(d => !(d.user_id === user.id && d.date === date));

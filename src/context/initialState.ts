@@ -19,7 +19,7 @@ export function loadState(): AppState {
     const rawDays = parsed.leaveDays ?? {};
     const leaveDays: AppState['leaveDays'] = {};
     for (const [k, v] of Object.entries(rawDays)) {
-      leaveDays[k] = (v === 'planned' || v === 'approved') ? v : 'approved';
+      if (v === 'planned' || v === 'approved') leaveDays[k] = v;
     }
     return {
       config: parsed.config ?? defaultState.config,

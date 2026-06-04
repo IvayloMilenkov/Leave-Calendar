@@ -14,7 +14,7 @@ export function TeamPicker({ initialCode }: Props) {
   const [showSetup, setShowSetup] = useState(!!initialCode);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  if (showSetup) return <TeamSetup />;
+  if (showSetup) return <TeamSetup initialCode={initialCode} />;
 
   async function handleSelect(id: string) {
     setLoadingId(id);

@@ -29,14 +29,14 @@ function CalendarView() {
   const isMobile = useIsMobile();
   const yearMode = state.ui.viewMode === 'year';
 
-  // On first load, replace localStorage days with the authoritative Supabase data
+  // Sync authoritative Supabase data into local state whenever teamLeaveDays loads/changes.
   useEffect(() => {
     const myDays: Record<string, 'planned' | 'approved'> = {};
     for (const d of teamLeaveDays) {
       if (d.user_id === user?.id) myDays[d.date] = d.status;
     }
     dispatch({ type: 'SET_LEAVE_DAYS', payload: myDays });
-  }, []);
+  }, [teamLeaveDays]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={`${styles.card} ${yearMode ? styles.cardWide : styles.cardCarousel}`}>

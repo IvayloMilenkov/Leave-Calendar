@@ -12,22 +12,39 @@ export interface AppState {
 
 export type Action =
   | { type: 'TOGGLE_LEAVE_DAY'; payload: string }
+  | { type: 'SET_LEAVE_DAY'; payload: { date: string; status: 'planned' | 'approved' | null } }
   | { type: 'SET_ALLOWANCE'; payload: number }
   | { type: 'SET_VIEW'; payload: { year: number; month: number } }
   | { type: 'SET_VIEW_MODE'; payload: 'month' | 'year' }
   | { type: 'SET_LEAVE_DAYS'; payload: AppState['leaveDays'] }
   | { type: 'CLEAR_ALL' };
 
+export function nextLeaveStatus(
+  current: 'planned' | 'approved' | undefined,
+): 'planned' | 'approved' | null {
+  if (current === 'planned') return 'approved';
+  if (current === 'approved') return null;
+  return 'planned';
+}
+
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'TOGGLE_LEAVE_DAY': {
       const next = { ...state.leaveDays };
-      if (next[action.payload] === 'planned') {
-        next[action.payload] = 'approved';
-      } else if (next[action.payload] === 'approved') {
+      const status = nextLeaveStatus(next[action.payload]);
+      if (status === null) {
         delete next[action.payload];
       } else {
-        next[action.payload] = 'planned';
+        next[action.payload] = status;
+      }
+      return { ...state, leaveDays: next };
+    }
+    case 'SET_LEAVE_DAY': {
+      const next = { ...state.leaveDays };
+      if (action.payload.status === null) {
+        delete next[action.payload.date];
+      } else {
+        next[action.payload.date] = action.payload.status;
       }
       return { ...state, leaveDays: next };
     }
