@@ -25,6 +25,7 @@ interface TeamContextValue {
   leaveTeam: () => Promise<void>;
   removeMember: (userId: string) => Promise<void>;
   updateMyColor: (color: string) => Promise<void>;
+  updateMyDisplayName: (name: string) => Promise<void>;
   regenerateInviteCode: () => Promise<void>;
   syncLeaveDay: (date: string, status: LeaveStatus | null) => Promise<void>;
   selectTeam: (id: string) => Promise<void>;
@@ -228,6 +229,14 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setMembers(prev => prev.map(m => m.user_id === user.id ? { ...m, color } : m));
   }
 
+  async function updateMyDisplayName(name: string) {
+    if (!user || !team) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    await supabase.from('team_members').update({ display_name: trimmed }).eq('team_id', team.id).eq('user_id', user.id);
+    setMembers(prev => prev.map(m => m.user_id === user.id ? { ...m, display_name: trimmed } : m));
+  }
+
   async function regenerateInviteCode() {
     if (!team || !user) return;
     if (user.id !== team.owner_id) throw new Error('Only the team owner can regenerate the invite code.');
@@ -264,7 +273,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     <TeamContext.Provider value={{
       team, allTeams, members, myColor, teamLeaveDays, loading, activeTeamId,
       createTeam, joinTeam, leaveTeam, removeMember,
-      updateMyColor, regenerateInviteCode, syncLeaveDay, selectTeam, clearActiveTeam,
+      updateMyColor, updateMyDisplayName, regenerateInviteCode, syncLeaveDay, selectTeam, clearActiveTeam,
     }}>
       {children}
     </TeamContext.Provider>

@@ -16,8 +16,10 @@ interface Props {
 
 export function TeamSettings({ onClose }: Props) {
   const { user, signOut } = useAuth();
-  const { team, members, myColor, leaveTeam, removeMember, updateMyColor, regenerateInviteCode, clearActiveTeam } = useTeam();
+  const { team, members, myColor, leaveTeam, removeMember, updateMyColor, updateMyDisplayName, regenerateInviteCode, clearActiveTeam } = useTeam();
   const [copied, setCopied] = useState(false);
+  const myDisplayName = members.find(m => m.user_id === user?.id)?.display_name ?? '';
+  const [nameInput, setNameInput] = useState(myDisplayName);
 
   if (!team) return null;
 
@@ -28,6 +30,10 @@ export function TeamSettings({ onClose }: Props) {
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleSaveName() {
+    await updateMyDisplayName(nameInput);
   }
 
   async function handleLeave() {
@@ -83,6 +89,21 @@ export function TeamSettings({ onClose }: Props) {
                 aria-label={c}
               />
             ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Your name</h3>
+          <div className={styles.nameRow}>
+            <input
+              className={styles.nameInput}
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); }}
+              maxLength={40}
+              placeholder="Display name"
+            />
+            <button className={styles.smallBtn} onClick={handleSaveName}>Save</button>
           </div>
         </section>
 
