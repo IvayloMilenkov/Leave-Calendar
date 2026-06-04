@@ -90,8 +90,8 @@ describe('leaveTeam', () => {
     const deletedTables: string[] = [];
     fromMock.mockImplementation((table: string) => {
       const b = makeBuilder({ data: null, error: null });
-      const origDelete = b.delete as ReturnType<typeof vi.fn>;
-      b.delete = vi.fn((...args) => {
+      const origDelete = b.delete as (...args: unknown[]) => unknown;
+      b.delete = vi.fn((...args: unknown[]) => {
         deletedTables.push(table);
         return origDelete(...args);
       });

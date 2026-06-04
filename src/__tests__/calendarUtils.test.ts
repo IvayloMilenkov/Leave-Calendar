@@ -42,8 +42,8 @@ describe('buildCalendarGrid', () => {
   it('pads the grid end with nulls so length % 7 === 0', () => {
     const cells = buildCalendarGrid(2025, 3);
     expect(cells.length % 7).toBe(0);
-    const lastNonNull = cells.findLastIndex(c => c !== null);
-    expect(cells.slice(lastNonNull + 1).every(c => c === null)).toBe(true);
+    const lastNonNull = cells.reduce((acc, c, i) => (c !== null ? i : acc), -1);
+    expect(cells.slice(lastNonNull + 1).every((c: string | null) => c === null)).toBe(true);
   });
 });
 
