@@ -162,9 +162,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 
   async function createTeam(name: string) {
     if (!user) return;
+    const invite_code = Math.random().toString(36).slice(2, 10);
     const { data: newTeam, error } = await supabase
       .from('teams')
-      .insert({ name, owner_id: user.id })
+      .insert({ name, owner_id: user.id, invite_code })
       .select()
       .single();
     if (error || !newTeam) throw error;
